@@ -8,9 +8,10 @@ def insertUser(username, password, DoB):
     con = sql.connect("database_files/database.db")
     cur = con.cursor()
     
-    encodedPassword = password.encode()
+    encodedPassword = password.encode('utf-8')
 
     hashedPassword = bcrypt.hashpw(encodedPassword, bcrypt.gensalt())
+
     print("This the hashed password at submission: " + str(hashedPassword))
     cur.execute(
         "INSERT INTO users (username,password,dateOfBirth) VALUES (?,?,?)",
@@ -30,13 +31,14 @@ def retrieveUsers(username, password):
         return False
     else:
         cur.execute(f"SELECT password FROM users WHERE username = '{username}'")
-        hashedPassword = str(cur.fetchall())
+        hashedPassword = cur.fetchone()
+##        hashedPassword = cur.fetchall()
         print("This the hashed password converted to a string for printing: " + str(hashedPassword))
-        hashedPassword = hashedPassword.replace("[(b'", "")
-        hashedPassword = hashedPassword.replace("',)]", "")
+##        hashedPassword = hashedPassword.replace("[(b'", "")
+##        hashedPassword = hashedPassword.replace("',)]", "")
 
 ##        print("This the hashed password: " + hashedPassword)
-        #hashedPassword = hashedPassword.encode("utf-8")
+##        hashedPassword = hashedPassword.encode("utf-8")
 
         
         cur.execute(f"SELECT * FROM users WHERE password = '{password}'")
@@ -49,8 +51,8 @@ def retrieveUsers(username, password):
         # Simulate response time of heavy app for testing purposes
         time.sleep(random.randint(80, 90) / 1000)
         
-        print(bcrypt.checkpw(password.encode(), hashedPassword.encode()))
-        if bcrypt.checkpw(password.encode(), hashedPassword.encode()):
+##        print(bcrypt.checkpw(password.encode(), hashedPassword.encode()))
+        if bcrypt.checkpw(password.encode(), hashedPassword[0]):
             con.close()
             return True
         else:
