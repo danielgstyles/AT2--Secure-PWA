@@ -2,6 +2,8 @@ import sqlite3 as sql
 import time
 import random
 import bcrypt
+from flask import request
+from flask import jsonify
 
 
 def insertUser(username, password, DoB):
@@ -12,13 +14,18 @@ def insertUser(username, password, DoB):
 
     hashedPassword = bcrypt.hashpw(encodedPassword, bcrypt.gensalt())
 
-    print("This the hashed password at submission: " + str(hashedPassword))
-    cur.execute(
-        "INSERT INTO users (username,password,dateOfBirth) VALUES (?,?,?)",
-        (username, hashedPassword, DoB),
-    )
-    con.commit()
-    con.close()
+    #print("This the hashed password at submission: " + str(hashedPassword))
+    query = "SELECT * FROM users WHERE username = ?"
+    cur.execute(query, (username,))
+    if cur.fetchone() == None:
+        cur.execute("INSERT INTO users (username,password,dateOfBirth) VALUES (?,?,?)",
+        (username, hashedPassword, DoB),)
+        con.commit()
+        con.close()
+    #else:
+
+
+
 
 
 def retrieveUsers(username, password):
@@ -47,9 +54,19 @@ def retrieveUsers(username, password):
         # Plain text log of visitor count as requested by Unsecure PWA management
         with open("visitor_log.txt", "r") as file:
             number = int(file.read().strip())
-            number += 1
+            if number == "":
+                number = 1
+            else:
+                number += 1
+
         with open("visitor_log.txt", "w") as file:
+            ipaddress = jsonify({'ip': request.remote_addr})
             file.write(str(number))
+
+        with open("ip_log.txt", "a") as file:
+            ipaddress = request.remote_addr
+            file.write(str(ipaddress) + "\n")
+
         # Simulate response time of heavy app for testing purposes
         time.sleep(random.randint(80, 90) / 1000)
         
