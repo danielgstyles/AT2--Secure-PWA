@@ -75,7 +75,6 @@ def retrieveUsers(username, password):
             con.close()
             return True
         else:
-
             hashedEnteredPassword = bcrypt.hashpw(b"password", bcrypt.gensalt())
             print("This is the Hash of the password just entered: " + str(hashedEnteredPassword))
             print("This the Saved hashed password: " + str(hashedPassword))

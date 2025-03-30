@@ -3,6 +3,8 @@ from flask import render_template
 from flask import request
 from flask import redirect
 import user_management as dbHandler
+import html
+
 
 # Code snippet for logging a message
 # app.logger.critical("message")
@@ -10,14 +12,15 @@ import user_management as dbHandler
 app = Flask(__name__)
 
 
-@app.route("/success.html", methods=["POST", "GET", "PUT", "PATCH", "DELETE"])
+@app.route("/success.html", methods=["POST", "GET"])
 def addFeedback():
     if request.method == "GET" and request.args.get("url"):
         url = request.args.get("url", "")
         return redirect(url, code=302)
     if request.method == "POST":
         feedback = request.form["feedback"]
-        dbHandler.insertFeedback(feedback)
+        sanitised_feedback = html.escape(feedback)
+        dbHandler.insertFeedback(sanitised_feedback)
         dbHandler.listFeedback()
         return render_template("/success.html", state=True, value="Back")
     else:
@@ -25,7 +28,7 @@ def addFeedback():
         return render_template("/success.html", state=True, value="Back")
 
 
-@app.route("/signup.html", methods=["POST", "GET", "PUT", "PATCH", "DELETE"])
+@app.route("/signup.html", methods=["POST", "GET"])
 def signup():
     if request.method == "GET" and request.args.get("url"):
         url = request.args.get("url", "")
@@ -40,7 +43,7 @@ def signup():
         return render_template("/signup.html")
 
 
-@app.route("/index.html", methods=["POST", "GET", "PUT", "PATCH", "DELETE"])
+@app.route("/index.html", methods=["POST", "GET"])
 @app.route("/", methods=["POST", "GET"])
 def home():
     if request.method == "GET" and request.args.get("url"):
@@ -54,7 +57,7 @@ def home():
             dbHandler.listFeedback()
             return render_template("/success.html", value=username, state=isLoggedIn)
         else:
-            return render_template("/index.html")
+            return render_template("/index.html", is_done=True)
     else:
         return render_template("/index.html")
 
