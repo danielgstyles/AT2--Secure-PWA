@@ -6,6 +6,7 @@ import user_management as dbHandler
 import html
 
 from flask import session                           #race condition prevention
+from datetime import timedelta
 
 
 # Code snippet for logging a message
@@ -13,6 +14,7 @@ from flask import session                           #race condition prevention
 
 app = Flask(__name__)
 app.secret_key = "dfjkasjdfljadfklja;dfkj;akdslf"   #race condition prevention
+app.permanent_session_lifetime = timedelta(seconds=30)
 
 @app.route("/success.html", methods=["POST", "GET"])
 def addFeedback():
@@ -32,11 +34,15 @@ def addFeedback():
     if request.method == "POST":
         feedback = request.form["feedback"]
         sanitised_feedback = html.escape(feedback)
-        username = session["user"]                              # this get the username from the session and places it in the variable username
-        dbHandler.insertFeedback(sanitised_feedback, username)  #Added username to the call to add the username to each entry of 
+        if "user" in session:
+            username = session["user"]                              # this get the username from the session and places it in the variable username
+            dbHandler.insertFeedback(sanitised_feedback, username)  #Added username to the call to add the username to each entry of 
                                                                 #feedback for login. need to add new field to feedback database for this to work
-        dbHandler.listFeedback()
-        return render_template("/success.html", state=True, value="FeedBack")
+            dbHandler.listFeedback()
+            return render_template("/success.html", state=True, value="FeedBack")
+        else:
+            return render_template("/index.html") 
+
     #else:
 
 @app.route("/signup.html", methods=["POST", "GET"])
@@ -63,9 +69,10 @@ def home():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        session["user"] = username  #race condition prevention (Activates the session). To close a session the browswer need to be closed to disconnected
         isLoggedIn = dbHandler.retrieveUsers(username, password)
         if isLoggedIn:
+            session["user"] = username  #race condition prevention (Activates the session). To close a session the browswer need to be closed to disconnected
+            session.permanent = True
             dbHandler.listFeedback()
             return render_template("/success.html", value=username, state=isLoggedIn)
         else:
