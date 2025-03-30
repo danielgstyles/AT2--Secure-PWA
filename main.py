@@ -21,7 +21,7 @@ def addFeedback():
         url = request.args.get("url", "")
         return redirect(url, code=302)
     
-    if request.method == "GET":         # this entire if and nested if is for race condition prevention
+    if request.method == "GET": # this entire if and nested if is for race condition prevention. This use to be somewhat delt with the last else of the function
         if "user" in session:
             dbHandler.listFeedback()
             user = session["user"]
@@ -32,15 +32,12 @@ def addFeedback():
     if request.method == "POST":
         feedback = request.form["feedback"]
         sanitised_feedback = html.escape(feedback)
-        username = session["user"]
-        dbHandler.insertFeedback(sanitised_feedback, username)
+        username = session["user"]                              # this get the username from the session and places it in the variable username
+        dbHandler.insertFeedback(sanitised_feedback, username)  #Added username to the call to add the username to each entry of 
+                                                                #feedback for login. need to add new field to feedback database for this to work
         dbHandler.listFeedback()
         return render_template("/success.html", state=True, value="FeedBack")
     #else:
-
-
-
-
 
 @app.route("/signup.html", methods=["POST", "GET"])
 def signup():
@@ -66,7 +63,7 @@ def home():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        session["user"] = username
+        session["user"] = username  #race condition prevention (Activates the session). To close a session the browswer need to be closed to disconnected
         isLoggedIn = dbHandler.retrieveUsers(username, password)
         if isLoggedIn:
             dbHandler.listFeedback()
