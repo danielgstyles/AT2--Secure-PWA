@@ -5,27 +5,41 @@ from flask import redirect
 import user_management as dbHandler
 import html
 
+from flask import session                           #race condition prevention
+
 
 # Code snippet for logging a message
 # app.logger.critical("message")
 
 app = Flask(__name__)
-
+app.secret_key = "dfjkasjdfljadfklja;dfkj;akdslf"   #race condition prevention
 
 @app.route("/success.html", methods=["POST", "GET"])
 def addFeedback():
+        
     if request.method == "GET" and request.args.get("url"):
         url = request.args.get("url", "")
         return redirect(url, code=302)
+    
+    if request.method == "GET":         # this entire if and nested if is for race condition prevention
+        if "user" in session:
+            dbHandler.listFeedback()
+            user = session["user"]
+            return render_template("/success.html", state=True, value=user)
+        else:
+            return render_template("/index.html")       #down to here
+        
     if request.method == "POST":
         feedback = request.form["feedback"]
         sanitised_feedback = html.escape(feedback)
-        dbHandler.insertFeedback(sanitised_feedback)
+        username = session["user"]
+        dbHandler.insertFeedback(sanitised_feedback, username)
         dbHandler.listFeedback()
-        return render_template("/success.html", state=True, value="Back")
-    else:
-        dbHandler.listFeedback()
-        return render_template("/success.html", state=True, value="Back")
+        return render_template("/success.html", state=True, value="FeedBack")
+    #else:
+
+
+
 
 
 @app.route("/signup.html", methods=["POST", "GET"])
@@ -52,6 +66,7 @@ def home():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        session["user"] = username
         isLoggedIn = dbHandler.retrieveUsers(username, password)
         if isLoggedIn:
             dbHandler.listFeedback()
